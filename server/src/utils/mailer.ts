@@ -4,8 +4,6 @@ import { env } from "../config/env";
 const resend = new Resend(env.RESEND_API_KEY);
 
 export const sendOtpEmail = async (email: string, code: string): Promise<void> => {
-  console.log(`[MAILER] Sending OTP to ${email}`);
-
   const { data, error } = await resend.emails.send({
     from: "onboarding@resend.dev",
     to: email,
@@ -27,9 +25,9 @@ export const sendOtpEmail = async (email: string, code: string): Promise<void> =
   });
 
   if (error) {
-    console.error("[MAILER] Resend error:", error);
-    throw new Error(`Failed to send OTP email: ${error.message}`);
+    console.error("[MAILER] Failed to send OTP email:", error);
+    throw new Error(`Email delivery failed: ${error.message}`);
   }
 
-  console.log(`[MAILER] Email sent successfully. ID: ${data?.id}`);
+  console.log(`[MAILER] OTP email sent to ${email} — id: ${data?.id}`);
 };
