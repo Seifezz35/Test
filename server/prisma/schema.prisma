@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VerificationPurpose {
+  REGISTER
+  RESET_PASSWORD
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String?            @unique
+  phone             String?            @unique
+  passwordHash      String
+  name              String
+  isVerified        Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  profile           Profile?
+  trips             Trip[]
+  sessions          Session[]
+  verificationCodes VerificationCode[]
+  fuelEntries       FuelEntry[]
+}
+
+model Profile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  carModel               String?
+  carYear                Int?
+  licensePlate           String?
+  defaultCommission      Float    @default(20)
+  defaultCommissionUber  Float    @default(25)
+  defaultCommissionCareem Float   @default(20)
+  defaultCommissionInDrive Float  @default(12)
+  defaultCommissionOther Float    @default(15)
+  defaultFuelCostKm      Float    @default(2.5)
+  currency               String   @default("EGP")
+  notificationsEnabled   Boolean  @default(true)
+  monthlyGoal            Float    @default(3000)
+  theme                  String   @default("dark")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Trip {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime
+  startTime       String
+  endTime         String
+  durationMinutes Int
+  distanceKm      Float
+  fareAmount      Float
+  tipAmount       Float    @default(0)
+  commission      Float
+  fuelCost        Float
+  tollFees        Float    @default(0)
+  parkingFees     Float    @default(0)
+  netProfit       Float
+  platform        String
+  tags            String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, platform])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model VerificationCode {
+  id        String              @id @default(cuid())
+  userId    String?
+  email     String?
+  phone     String?
+  purpose   VerificationPurpose
+  code      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime            @default(now())
+  user      User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([purpose, expiresAt])
+  @@index([email, phone])
+}
+
+model FuelEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime
+  liters        Float
+  totalCost     Float
+  pricePerLiter Float
+  stationName   String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
