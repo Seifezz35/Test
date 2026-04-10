@@ -7,7 +7,6 @@ import { sendOtpEmail } from "../utils/mailer";
 import { getOtpExpiry, generateOtpCode, hashOtpCode } from "../utils/otp";
 import { comparePassword, hashPassword } from "../utils/password";
 import { prisma } from "../utils/prisma";
-import { sendOtpSms } from "../utils/sms";
 
 type IdentifierInput = {
   email?: string | null;
@@ -111,13 +110,11 @@ const sendVerificationCode = async (
     }
   });
 
-  if (target.email) {
-    await sendOtpEmail(target.email, code);
+  if (!target.email) {
+    throw new AppError("يجب توفير بريد إلكتروني لإرسال رمز التحقق", 422, "EMAIL_REQUIRED");
   }
 
-  if (target.phone) {
-    await sendOtpSms(target.phone, code);
-  }
+  await sendOtpEmail(target.email, code);
 };
 
 const getUserWithProfile = (userId: string) =>

@@ -1,3 +1,1 @@
-export const sendOtpSms = async (_phone: string, _code: string): Promise<void> => {
-  throw new Error("SMS delivery is not configured. Use email-based OTP.");
-};
+// SMS delivery is not supported. All OTPs are sent via email (Resend).
