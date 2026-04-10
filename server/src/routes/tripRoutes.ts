@@ -15,6 +15,7 @@ export const tripRouter = Router();
 tripRouter.use(requireAuth);
 tripRouter.get("/", validate({ query: tripSchemas.list }), getTrips);
 tripRouter.post("/", validate({ body: tripSchemas.body }), createTripEntry);
+tripRouter.post("/add", validate({ body: tripSchemas.body }), createTripEntry);
 tripRouter.get("/:id", validate({ params: tripSchemas.params }), getTrip);
 tripRouter.put(
   "/:id",

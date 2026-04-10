@@ -15,6 +15,7 @@ const envSchema = z.object({
   OTP_TTL_MINUTES: z.coerce.number().default(10),
   OTP_FROM_EMAIL: z.string().default("noreply@captainprofit.app"),
   OTP_FROM_SMS: z.string().default("CaptainProfit"),
+  RESEND_API_KEY: z.string().min(1),
   CORS_ORIGIN: z.string().default("http://localhost:5173")
 });
 

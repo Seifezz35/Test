@@ -12,13 +12,13 @@ import {
   verifyOtp
 } from "../controllers/authController";
 import { requireAuth } from "../middleware/auth";
-import { authRateLimit } from "../middleware/rateLimit";
+import { authRateLimit, otpRateLimit } from "../middleware/rateLimit";
 import { validate } from "../middleware/validate";
 
 export const authRouter = Router();
 
 authRouter.post("/register", authRateLimit, validate({ body: authSchemas.register }), register);
-authRouter.post("/verify-otp", authRateLimit, validate({ body: authSchemas.verifyOtp }), verifyOtp);
+authRouter.post("/verify-otp", otpRateLimit, validate({ body: authSchemas.verifyOtp }), verifyOtp);
 authRouter.post("/login", authRateLimit, validate({ body: authSchemas.login }), login);
 authRouter.post("/refresh", validate({ body: authSchemas.refresh }), refresh);
 authRouter.post("/logout", logout);
@@ -30,7 +30,7 @@ authRouter.post(
 );
 authRouter.post(
   "/reset-password",
-  authRateLimit,
+  otpRateLimit,
   validate({ body: authSchemas.resetPassword }),
   reset
 );

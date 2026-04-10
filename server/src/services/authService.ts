@@ -4,7 +4,7 @@ import { env } from "../config/env";
 import { AppError } from "../utils/appError";
 import { signAccessToken, signRefreshToken, verifyRefreshToken, type TokenPayload } from "../utils/jwt";
 import { sendOtpEmail } from "../utils/mailer";
-import { getOtpExpiry, generateOtpCode } from "../utils/otp";
+import { getOtpExpiry, generateOtpCode, hashOtpCode } from "../utils/otp";
 import { comparePassword, hashPassword } from "../utils/password";
 import { prisma } from "../utils/prisma";
 import { sendOtpSms } from "../utils/sms";
@@ -98,6 +98,7 @@ const sendVerificationCode = async (
   purpose: VerificationPurpose
 ) => {
   const code = generateOtpCode();
+  const hashedCode = hashOtpCode(code);
 
   await prisma.verificationCode.create({
     data: {
@@ -105,7 +106,7 @@ const sendVerificationCode = async (
       email: normalizeEmail(target.email),
       phone: normalizePhone(target.phone),
       purpose,
-      code,
+      code: hashedCode,
       expiresAt: getOtpExpiry()
     }
   });
@@ -203,11 +204,13 @@ const verifyCode = async (
     throw new AppError("المستخدم غير موجود", 404, "USER_NOT_FOUND");
   }
 
+  const hashedCode = hashOtpCode(code);
+
   const verificationCode = await prisma.verificationCode.findFirst({
     where: {
       userId: user.id,
       purpose,
-      code,
+      code: hashedCode,
       usedAt: null,
       expiresAt: {
         gt: new Date()

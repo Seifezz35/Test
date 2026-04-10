@@ -9,6 +9,7 @@ import {
   roundCurrency
 } from "../utils/trip";
 import { AppError } from "../utils/appError";
+import { upsertDay } from "./dayService";
 
 export type TripPayload = {
   date: string;
@@ -136,6 +137,7 @@ export const createTrip = async (userId: string, payload: TripPayload) => {
     }
   });
 
+  await upsertDay(userId, dayjs(payload.date).format("YYYY-MM-DD"));
   return enrichTrip(trip);
 };
 
@@ -152,7 +154,9 @@ export const getTripById = async (userId: string, id: string) => {
 };
 
 export const updateTrip = async (userId: string, id: string, payload: TripPayload) => {
-  await getTripById(userId, id);
+  const existing = await getTripById(userId, id);
+  const oldDate = dayjs(existing.date).format("YYYY-MM-DD");
+  const newDate = dayjs(payload.date).format("YYYY-MM-DD");
 
   const durationMinutes = calculateDurationMinutes(payload.startTime, payload.endTime);
   const netProfit = calculateNetProfit(payload);
@@ -177,12 +181,16 @@ export const updateTrip = async (userId: string, id: string, payload: TripPayloa
     }
   });
 
+  await upsertDay(userId, newDate);
+  if (oldDate !== newDate) await upsertDay(userId, oldDate);
   return enrichTrip(trip);
 };
 
 export const deleteTrip = async (userId: string, id: string) => {
-  await getTripById(userId, id);
+  const existing = await getTripById(userId, id);
+  const date = dayjs(existing.date).format("YYYY-MM-DD");
   await prisma.trip.delete({ where: { id } });
+  await upsertDay(userId, date);
 };
 
 export const getTripsByRange = async (userId: string, start?: Date, end?: Date) =>
