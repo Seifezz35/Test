@@ -21,17 +21,12 @@ const passwordSchema = z
   .regex(/[^A-Za-z0-9]/, "كلمة المرور يجب أن تحتوي على رمز خاص");
 
 export const authSchemas = {
-  register: z
-    .object({
-      email: z.string().email("البريد الإلكتروني غير صحيح").optional(),
-      phone: z.string().min(8, "رقم الهاتف غير صحيح").optional(),
-      name: z.string().min(2, "الاسم مطلوب"),
-      password: passwordSchema
-    })
-    .refine((values) => values.email || values.phone, {
-      message: "يجب إدخال بريد إلكتروني أو رقم هاتف",
-      path: ["email"]
-    }),
+  register: z.object({
+    email: z.string().email("البريد الإلكتروني غير صحيح"),
+    phone: z.string().min(8, "رقم الهاتف غير صحيح").optional(),
+    name: z.string().min(2, "الاسم مطلوب"),
+    password: passwordSchema
+  }),
   verifyOtp: z.object({
     identifier: z.string().min(4, "أدخل البريد أو الهاتف"),
     code: z.string().length(6, "رمز التحقق يجب أن يكون 6 أرقام")
@@ -60,7 +55,7 @@ export const authSchemas = {
 const setRefreshCookie = (res: Response, refreshToken: string, refreshExpiresAt: string) => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     secure: process.env.NODE_ENV === "production",
     expires: new Date(refreshExpiresAt)
   });

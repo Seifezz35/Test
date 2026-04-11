@@ -1,5 +1,5 @@
-import { env } from "../config/env";
+import { AppError } from "./appError";
 
-export const sendOtpSms = async (phone: string, code: string) => {
-  console.log(`[SMS] OTP to ${phone} from ${env.OTP_FROM_SMS}: ${code}`);
+export const sendOtpSms = async (_phone: string, _code: string): Promise<void> => {
+  throw new AppError("إرسال OTP عبر SMS غير مدعوم حاليًا", 501, "SMS_NOT_SUPPORTED");
 };

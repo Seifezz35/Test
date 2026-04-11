@@ -18,14 +18,21 @@ export const TripDetailPage = () => {
   const navigate = useNavigate();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
 
-    api.get<ApiResponse<Trip>>(`/trips/${id}`).then((response) => {
-      setTrip(response.data.data);
-      setLoading(false);
-    });
+    api
+      .get<ApiResponse<Trip>>(`/trips/${id}`)
+      .then((response) => {
+        setTrip(response.data.data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
   }, [id]);
 
   const deleteTrip = async () => {
@@ -38,6 +45,16 @@ export const TripDetailPage = () => {
       window.alert("تعذر حذف الرحلة الآن.");
     }
   };
+
+  if (error) {
+    return (
+      <PageShell>
+        <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 text-center text-slate-300">
+          تعذر تحميل تفاصيل الرحلة. حاول مرة أخرى.
+        </div>
+      </PageShell>
+    );
+  }
 
   if (loading || !trip) {
     return (

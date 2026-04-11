@@ -18,7 +18,7 @@ app.use(
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
-app.use(morgan("dev"));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
 app.get("/health", (_req, res) => {
   res.json({

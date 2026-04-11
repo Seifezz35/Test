@@ -59,9 +59,7 @@ export const listTrips = async (userId: string, filters: TripFilters) => {
       gte: filters.from ? dayjs(filters.from).startOf("day").toDate() : undefined,
       lte: filters.to ? dayjs(filters.to).endOf("day").toDate() : undefined
     };
-  }
-
-  if (filters.search) {
+  } else if (filters.search) {
     where.date = {
       gte: dayjs(filters.search).startOf("day").toDate(),
       lte: dayjs(filters.search).endOf("day").toDate()
@@ -185,14 +183,19 @@ export const deleteTrip = async (userId: string, id: string) => {
   await prisma.trip.delete({ where: { id } });
 };
 
-export const getTripsByRange = async (userId: string, start?: Date, end?: Date) =>
-  prisma.trip.findMany({
+export const getTripsByRange = async (userId: string, start?: Date, end?: Date) => {
+  const dateFilter: Prisma.DateTimeFilter = {};
+  if (start) dateFilter.gte = start;
+  if (end) dateFilter.lte = end;
+
+  return prisma.trip.findMany({
     where: {
       userId,
-      date: start || end ? { gte: start, lte: end } : undefined
+      date: start || end ? dateFilter : undefined
     },
     orderBy: { date: "asc" }
   });
+};
 
 export const getAllTrips = async (userId: string) =>
   prisma.trip.findMany({

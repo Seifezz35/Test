@@ -85,25 +85,31 @@ export const AddTripPage = () => {
   useEffect(() => {
     if (!id) return;
 
-    api.get<ApiResponse<Trip>>(`/trips/${id}`).then((response) => {
-      const trip = response.data.data;
-      form.reset({
-        date: trip.date.slice(0, 10),
-        startTime: trip.startTime,
-        endTime: trip.endTime,
-        distanceKm: trip.distanceKm,
-        fareAmount: trip.fareAmount,
-        commission: trip.commission,
-        fuelCost: trip.fuelCost,
-        tollFees: trip.tollFees,
-        parkingFees: trip.parkingFees,
-        tipAmount: trip.tipAmount,
-        platform: trip.platform,
-        tags: trip.tags
+    api
+      .get<ApiResponse<Trip>>(`/trips/${id}`)
+      .then((response) => {
+        const trip = response.data.data;
+        form.reset({
+          date: trip.date.slice(0, 10),
+          startTime: trip.startTime,
+          endTime: trip.endTime,
+          distanceKm: trip.distanceKm,
+          fareAmount: trip.fareAmount,
+          commission: trip.commission,
+          fuelCost: trip.fuelCost,
+          tollFees: trip.tollFees,
+          parkingFees: trip.parkingFees,
+          tipAmount: trip.tipAmount,
+          platform: trip.platform,
+          tags: trip.tags
+        });
+        setLoading(false);
+      })
+      .catch(() => {
+        window.alert("تعذر تحميل بيانات الرحلة.");
+        navigate("/history");
       });
-      setLoading(false);
-    });
-  }, [form, id]);
+  }, [form, id, navigate]);
 
   const suggestedFuel = roundValue(distanceKm * (profile?.defaultFuelCostKm ?? 2.5));
   const netProfit = useMemo(

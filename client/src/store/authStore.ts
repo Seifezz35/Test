@@ -2,13 +2,14 @@ import axios from "axios";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { clearTokens, getRefreshToken, setTokens } from "@/lib/tokenStorage";
+import { useTripStore } from "@/store/tripStore";
 import type { ApiResponse, AuthPayload, User } from "@/types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000/api";
 
 type RegisterPayload = {
   name: string;
-  email?: string;
+  email: string;
   phone?: string;
   password: string;
 };
@@ -73,42 +74,31 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
 
-        try {
-          if (accessToken) {
+        set({ loading: true });
+
+        if (accessToken) {
+          try {
             const response = await request.get<ApiResponse<User>>("/auth/me", {
-              headers: {
-                Authorization: `Bearer ${accessToken}`
-              }
+              headers: { Authorization: `Bearer ${accessToken}` }
             });
-
-            set({
-              user: response.data.data,
-              error: null
-            });
+            set({ user: response.data.data, error: null, loading: false });
             return;
+          } catch {
+            // Access token expired — fall through to refresh
           }
+        }
 
-          if (refreshToken) {
+        if (refreshToken) {
+          try {
             const response = await request.post<ApiResponse<AuthPayload>>("/auth/refresh", {
               refreshToken
             });
             handleAuthSuccess(response.data.data, set);
-            return;
-          }
-        } catch {
-          if (refreshToken) {
-            try {
-              const response = await request.post<ApiResponse<AuthPayload>>("/auth/refresh", {
-                refreshToken
-              });
-              handleAuthSuccess(response.data.data, set);
-              return;
-            } catch {
-              get().clearAuth();
-            }
-          } else {
+          } catch {
             get().clearAuth();
           }
+        } else {
+          get().clearAuth();
         }
       },
       register: async (payload) => {
@@ -137,6 +127,7 @@ export const useAuthStore = create<AuthState>()(
             code
           });
           handleAuthSuccess(response.data.data, set);
+          useTripStore.getState().resetDismissedAdvice();
         } catch (error) {
           const message =
             axios.isAxiosError(error) && error.response?.data?.error?.message

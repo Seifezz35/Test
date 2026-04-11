@@ -24,7 +24,13 @@ export const formatCurrency = (value: number, currency = "EGP") =>
 
 export const formatCompactNumber = (value: number) => numberFormatter.format(value);
 
-export const getTodayIso = () => new Date().toISOString().slice(0, 10);
+export const getTodayIso = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export const formatMonthLabel = (value: string) =>
   new Intl.DateTimeFormat("ar-EG", {

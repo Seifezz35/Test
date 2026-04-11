@@ -7,7 +7,6 @@ import { sendOtpEmail } from "../utils/mailer";
 import { getOtpExpiry, generateOtpCode } from "../utils/otp";
 import { comparePassword, hashPassword } from "../utils/password";
 import { prisma } from "../utils/prisma";
-import { sendOtpSms } from "../utils/sms";
 
 type IdentifierInput = {
   email?: string | null;
@@ -97,6 +96,11 @@ const sendVerificationCode = async (
   target: IdentifierInput,
   purpose: VerificationPurpose
 ) => {
+  await prisma.verificationCode.updateMany({
+    where: { userId, purpose, usedAt: null },
+    data: { usedAt: new Date() }
+  });
+
   const code = generateOtpCode();
 
   await prisma.verificationCode.create({
@@ -112,10 +116,6 @@ const sendVerificationCode = async (
 
   if (target.email) {
     await sendOtpEmail(target.email, code);
-  }
-
-  if (target.phone) {
-    await sendOtpSms(target.phone, code);
   }
 };
 
@@ -144,10 +144,22 @@ export const registerUser = async ({ email, phone, password, name }: RegisterInp
   const existingUser = await prisma.user.findFirst({
     where: {
       OR: conditions
-    }
+    },
+    include: { profile: true }
   });
 
   if (existingUser) {
+    if (!existingUser.isVerified) {
+      await sendVerificationCode(
+        existingUser.id,
+        { email: normalizedEmail, phone: normalizedPhone },
+        VerificationPurpose.REGISTER
+      );
+      return {
+        user: serializeUser(existingUser),
+        verificationTarget: normalizedEmail ?? normalizedPhone
+      };
+    }
     throw new AppError("المستخدم موجود بالفعل", 409, "USER_EXISTS");
   }
 
@@ -365,7 +377,7 @@ export const forgotPassword = async (identifier: string) => {
   });
 
   if (!user) {
-    throw new AppError("المستخدم غير موجود", 404, "USER_NOT_FOUND");
+    return; // silently return — prevents user enumeration
   }
 
   await sendVerificationCode(user.id, target, VerificationPurpose.RESET_PASSWORD);
@@ -377,7 +389,8 @@ export const resetPassword = async (identifier: string, code: string, password: 
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      passwordHash: await hashPassword(password)
+      passwordHash: await hashPassword(password),
+      isVerified: true
     }
   });
 

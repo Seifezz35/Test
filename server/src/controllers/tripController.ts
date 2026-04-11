@@ -12,18 +12,23 @@ import { sendSuccess } from "../utils/response";
 
 const timeSchema = z.string().regex(/^\d{2}:\d{2}$/, "صيغة الوقت يجب أن تكون HH:mm");
 
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "صيغة التاريخ غير صحيحة (YYYY-MM-DD)")
+  .optional();
+
 export const tripSchemas = {
   list: z.object({
     page: z.coerce.number().min(1).default(1),
     limit: z.coerce.number().min(1).max(50).default(10),
-    from: z.string().optional(),
-    to: z.string().optional(),
+    from: isoDateSchema,
+    to: isoDateSchema,
     platform: z.string().optional(),
     tag: z.string().optional(),
     profit: z.enum(["profit", "loss"]).optional(),
     sortBy: z.enum(["date", "profit", "distance", "duration"]).optional(),
     sortOrder: z.enum(["asc", "desc"]).optional(),
-    search: z.string().optional()
+    search: isoDateSchema
   }),
   params: z.object({
     id: z.string().cuid("معرف الرحلة غير صالح")
